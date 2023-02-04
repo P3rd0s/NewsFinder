@@ -16,7 +16,7 @@ async def main():
         script_dir = os.path.dirname(__file__)
         abs_ini_path = os.path.join(script_dir, "iocParser/ioc-patterns.ini")
 
-        redis_storage = redis.Redis(host="redis", decode_responses=True)
+        redis_storage = redis.Redis(host=os.environ.get('REDIS', 'localhost'), decode_responses=True)
         ioc_parser = IOCParser(abs_ini_path, redis_storage)
 
         process.crawl(darkreading.DarkreadingSpider, ioc_parser, redis_storage)

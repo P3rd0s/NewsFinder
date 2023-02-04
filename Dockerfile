@@ -11,6 +11,7 @@ RUN pip install -r /usr/src/app/NewsFinder/requirements.txt && \
 
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
+ENV REDIS=REDIS
 
 COPY . /usr/src/app/NewsFinder
 
