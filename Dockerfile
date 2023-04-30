@@ -3,8 +3,8 @@ FROM python:3.9.16-slim-bullseye
 WORKDIR /usr/src/app/NewsFinder
 
 COPY requirements.txt /usr/src/app/NewsFinder
-RUN apk add --no-cache postgresql-libs && \
-    apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev && \
+RUN apt-get install postgresql-libs && \
+    apt-get install gcc musl-dev postgresql-dev && \
     pip install -r /usr/src/app/NewsFinder/requirements.txt && \
     apt-get update && \
     apt-get install -y locales && \
