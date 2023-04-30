@@ -75,11 +75,3 @@ class ThehackernewsSpider(scrapy.Spider):
         except Exception as unexpected_error:
             message = "[!] Scrap failure for {}".format(report['Title'])
             print(message, unexpected_error)
-
-        # yield {
-        #     'title': response.xpath('.//h1[@class=\'story-title\']/a/text()').get(),
-        #     'article': ''.join(response.xpath('.//div[@id=\'articlebody\']/descendant::*/text()').extract()),
-        #     'date': response.xpath('.//*[@class=\'author\']/text()').get(),
-        #     'author': response.xpath('.//*[@class=\'author\']/a/text()').get(),
-        #     'link': response.request.url
-        # }

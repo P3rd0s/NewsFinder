@@ -1,3 +1,4 @@
+import base64
 import io
 import os
 import argparse
@@ -32,12 +33,16 @@ class WhiteList(dict):
 class IOCParser(object):
     patterns = {}
     redis = None
+    postgres = None
+    postgres_cursor = None
 
-    def __init__(self, patterns_ini, redis):
+    def __init__(self, patterns_ini, redis, postgres):
         basedir = os.path.dirname(os.path.abspath(__file__))
         self.load_patterns(patterns_ini)
         self.whitelist = WhiteList(basedir)
         self.redis: Redis = redis
+        self.postgres = postgres
+        self.postgres_cursor = postgres.cursor()
 
     def load_patterns(self, fpath):
         config = ConfigParser.ConfigParser()
@@ -63,17 +68,27 @@ class IOCParser(object):
 
         return False
 
-    def parse_data(self, data, report):
+    def parse_data(self, data, report, isPdf = False):
         ioc_counter = 0
 
+        pre_ioc = r'([A-Z][^\.!?]*?'
+        post_ioc = r'[^\n\.!?]*[\.!?\n]\d*)'
+
+        if not isPdf:
+            table = os.environ.get('POSTGRES_TABLE', 'articles')
+            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''', (base64.b64encode(data.encode()),))
+            self.postgres.commit()
+
         for ioc_type, ioc_regexp in self.patterns.items():
-            matches = ioc_regexp.findall(str(data))
+            combined_regexp = re.compile(''.join(x for x in [pre_ioc, ioc_regexp.pattern, post_ioc]))
+            matches = combined_regexp.findall(str(data))
 
             for ind_match in matches:
+                ioc_match = ind_match
                 if isinstance(ind_match, tuple):
-                    ind_match = ind_match[0]
+                    ioc_match = ind_match[1]
 
-                if self.is_in_whitelist(ind_match, ioc_type):
+                if self.is_in_whitelist(ioc_match, ioc_type):
                     continue
 
                 try:
@@ -81,7 +96,8 @@ class IOCParser(object):
                     self.redis.hmset(IOC_ID_KEY + ":" + ioc_id, {
                         'type': ioc_type,
                         'id': ioc_id,
-                        'ioc': ind_match,
+                        'ioc': ioc_match,
+                        'ioc_around': ind_match[0],
                         'article_hash': report['SHA-1']
                     })
                     self.redis.sadd(IOC_TYPES + ":" + ioc_type, ioc_id)
@@ -104,12 +120,15 @@ class IOCParser(object):
     def parse_pdf(self, pdf_file_response: Response, report):
         ioc_counter = 0
         try:
+            table = os.environ.get('POSTGRES_TABLE', 'articles')
+            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''', (base64.b64encode(pdf_file_response.content),))
+            self.postgres.commit()
             with io.BytesIO(pdf_file_response.content) as open_pdf_file:
                 pdf = PdfReader(open_pdf_file)
 
                 for page in pdf.pages:
                     data = page.extract_text()
-                    ioc_counter = ioc_counter + self.parse_data(data, report)
+                    ioc_counter = ioc_counter + self.parse_data(data, report, True)
 
         except Exception:
             raise

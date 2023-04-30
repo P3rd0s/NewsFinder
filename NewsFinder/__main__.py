@@ -1,5 +1,7 @@
 import asyncio
 import os.path
+
+import psycopg2
 import redis
 
 from NewsFinder.iocParser.iocparser import IOCParser
@@ -9,6 +11,8 @@ from scrapy.crawler import CrawlerProcess
 
 
 async def main():
+    postgres_storage = None
+    redis_storage = None
     try:
         settings = get_project_settings()
         process = CrawlerProcess(settings)
@@ -16,8 +20,14 @@ async def main():
         script_dir = os.path.dirname(__file__)
         abs_ini_path = os.path.join(script_dir, "iocParser/ioc-patterns.ini")
 
+        postgres_storage = psycopg2.connect(
+            host=os.environ.get('POSTGRES', 'localhost'),
+            database=os.environ.get('POSTGRES_DB', 'articlesdb'),
+            user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
+            password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
+
         redis_storage = redis.Redis(host=os.environ.get('REDIS', 'localhost'), decode_responses=True)
-        ioc_parser = IOCParser(abs_ini_path, redis_storage)
+        ioc_parser = IOCParser(abs_ini_path, redis_storage, postgres_storage)
 
         process.crawl(darkreading.DarkreadingSpider, ioc_parser, redis_storage)
         process.crawl(thehackernews.ThehackernewsSpider, ioc_parser, redis_storage)
@@ -29,7 +39,10 @@ async def main():
         print(message, unexpected_error)
     finally:
         print("DISCONNECT STORAGE")
-        redis_storage.close()
+        if redis_storage is not None:
+            redis_storage.close()
+        if postgres_storage is not None:
+            postgres_storage.close()
 
 if __name__ == '__main__':
     try:

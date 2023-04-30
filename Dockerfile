@@ -12,6 +12,11 @@ RUN pip install -r /usr/src/app/NewsFinder/requirements.txt && \
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV REDIS=REDIS
+ENV POSTGRES=POSTGRES
+ENV POSTGRES_DB=articlesdb
+ENV POSTGRES_TABLE=articles
+ENV POSTGRES_USER=iocsfinder
+ENV POSTGRES_PASSWORD=strongHeavyPassword4thisdb
 
 COPY . /usr/src/app/NewsFinder
 
