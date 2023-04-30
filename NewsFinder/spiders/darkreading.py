@@ -41,7 +41,7 @@ class DarkreadingSpider(scrapy.Spider):
             'Year': date_obj.strftime('%Y'),
             'Source': response.xpath('.//*[@class="author-name"]/a/text()').get() or 'no_info',
             'Link': response.request.url,
-            'Filename': 'no_data',
+            'Filename': '',
             'SHA-1': hashlib.sha1(str.encode(response.request.url)).hexdigest()
         }
 
@@ -61,7 +61,7 @@ class DarkreadingSpider(scrapy.Spider):
             })
 
             self.redis.hincrby(ARTICLES + ':' + report['SHA-1'], 'ioc_count',
-                               self.ioc_parser.parse_data(''.join(
+                               self.ioc_parser.parse_data('\n'.join(
                                    response.xpath(
                                        './/*[contains(@class, "article-content")]/descendant::*[self::p or self::h4 or (self::a and not(ancestor::footer))]/text()').extract()),
                                    report))

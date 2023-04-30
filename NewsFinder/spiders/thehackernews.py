@@ -47,7 +47,7 @@ class ThehackernewsSpider(scrapy.Spider):
             'Year': date_obj.strftime('%Y'),
             'Source': response.xpath('.//*[@class=\'author\'][2]/text()').get() or 'no_info',
             'Link': response.request.url,
-            'Filename': 'no_data',
+            'Filename': '',
             'SHA-1': hashlib.sha1(str.encode(response.request.url)).hexdigest()
         }
 
@@ -68,7 +68,7 @@ class ThehackernewsSpider(scrapy.Spider):
 
             self.redis.hincrby(ARTICLES + ':' + report['SHA-1'], 'ioc_count',
                                self.ioc_parser.parse_data(
-                                   ''.join(
+                                   '\n'.join(
                                        response.xpath('.//div[@id=\'articlebody\']/descendant::*/text()').extract()),
                                    report))
 

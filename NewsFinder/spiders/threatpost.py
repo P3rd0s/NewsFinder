@@ -56,7 +56,7 @@ class ThreatpostSpider(XMLFeedSpider):
                 'Year': date_obj.strftime('%Y'),
                 'Source': item.xpath('.//*[name()=\'dc:creator\']/text()').get() or 'no_info',
                 'Link': item.xpath('.//link/text()').get(),
-                'Filename': 'no_data',
+                'Filename': '',
                 'SHA-1': hashlib.sha1(str.encode(item.xpath('.//link/text()').get())).hexdigest()
             }
 
@@ -81,7 +81,7 @@ class ThreatpostSpider(XMLFeedSpider):
 
             self.redis.hincrby(ARTICLES + ':' + report['SHA-1'], 'ioc_count',
                                self.ioc_parser.parse_data(
-                                   ''.join(
+                                   '\n'.join(
                                        response.xpath(
                                            './/div[@class="c-article__main"]//p/text()').extract()),
                                    report))
