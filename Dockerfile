@@ -3,7 +3,7 @@ FROM python:3.9.16-slim-bullseye
 WORKDIR /usr/src/app/NewsFinder
 
 COPY requirements.txt /usr/src/app/NewsFinder
-RUN apt-get -y install libpq-dev gcc \
+RUN apt-get -y install libpq-dev gcc && \
     pip install -r /usr/src/app/NewsFinder/requirements.txt && \
     apt-get update && \
     apt-get install -y locales && \
