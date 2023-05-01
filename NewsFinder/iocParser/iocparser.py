@@ -6,7 +6,6 @@ import glob
 import re
 import psycopg2
 
-
 import pandas as pd
 from PyPDF2 import PdfReader
 from redis.client import Redis
@@ -34,8 +33,8 @@ class WhiteList(dict):
 class IOCParser(object):
     patterns = {}
     redis = None
-    postgres = None
-    postgres_cursor = None
+    postgres: psycopg2.connection = None
+    postgres_cursor: psycopg2.cursor = None
 
     def __init__(self, patterns_ini, redis, postgres):
         basedir = os.path.dirname(os.path.abspath(__file__))
@@ -69,16 +68,11 @@ class IOCParser(object):
 
         return False
 
-    def parse_data(self, data, report, isPdf = False):
+    def parse_data(self, data, report, is_pdf=False):
         ioc_counter = 0
 
         pre_ioc = r'([A-Z][^\.!?]*?'
         post_ioc = r'[^\n\.!?]*[\.!?\n]\d*)'
-
-        if not isPdf:
-            table = os.environ.get('POSTGRES_TABLE', 'articles')
-            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''', (base64.b64encode(data.encode()),))
-            self.postgres.commit()
 
         for ioc_type, ioc_regexp in self.patterns.items():
             combined_regexp = re.compile(''.join(x for x in [pre_ioc, ioc_regexp.pattern, post_ioc]))
@@ -108,6 +102,26 @@ class IOCParser(object):
                     message = "IOC saving failed for {}".format(ind_match)
                     print(message, unexpected_error)
 
+        if not is_pdf:
+            try:
+                table = os.environ.get('POSTGRES_TABLE', 'articles')
+                self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''',
+                                             (base64.b64encode(data.encode()),))
+                self.postgres.commit()
+            except psycopg2.ProgrammingError as exc:
+                self.postgres.rollback()
+            except psycopg2.InterfaceError as exc:
+                self.postgres = psycopg2.connect(
+                    host=os.environ.get('POSTGRES', 'localhost'),
+                    database=os.environ.get('POSTGRES_DB', 'articlesdb'),
+                    user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
+                    password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
+                self.postgres_cursor = self.postgres.cursor()
+            except psycopg2.Error as exc:
+                self.postgres.rollback()
+            except Exception:
+                raise
+
         return ioc_counter
 
     def parse_csv(self, csvfile):
@@ -121,15 +135,17 @@ class IOCParser(object):
     def parse_pdf(self, pdf_file_response: Response, report):
         ioc_counter = 0
         try:
-            table = os.environ.get('POSTGRES_TABLE', 'articles')
-            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''', (base64.b64encode(pdf_file_response.content),))
-            self.postgres.commit()
             with io.BytesIO(pdf_file_response.content) as open_pdf_file:
                 pdf = PdfReader(open_pdf_file)
 
                 for page in pdf.pages:
                     data = page.extract_text()
                     ioc_counter = ioc_counter + self.parse_data(data, report, True)
+
+            table = os.environ.get('POSTGRES_TABLE', 'articles')
+            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''',
+                                         (base64.b64encode(pdf_file_response.content),))
+            self.postgres.commit()
 
         except psycopg2.ProgrammingError as exc:
             self.postgres.rollback()
@@ -140,6 +156,8 @@ class IOCParser(object):
                 user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
                 password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
             self.postgres_cursor = self.postgres.cursor()
+        except psycopg2.Error as exc:
+            self.postgres.rollback()
         except Exception:
             raise
 
