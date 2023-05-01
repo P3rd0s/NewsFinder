@@ -33,6 +33,7 @@ async def main():
         abs_ini_path = os.path.join(script_dir, "iocParser/ioc-patterns.ini")
 
         while not postgres_storage:
+            await asyncio.sleep(5)
             postgres_storage = postgres_test()
 
         redis_storage = redis.Redis(host=os.environ.get('REDIS', 'localhost'), decode_responses=True)
