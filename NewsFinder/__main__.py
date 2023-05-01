@@ -10,6 +10,18 @@ from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerProcess
 
 
+def postgres_test():
+    try:
+        conn = psycopg2.connect(
+            host=os.environ.get('POSTGRES', 'localhost'),
+            database=os.environ.get('POSTGRES_DB', 'articlesdb'),
+            user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
+            password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
+        return conn
+    except:
+        return False
+
+
 async def main():
     postgres_storage = None
     redis_storage = None
@@ -20,11 +32,8 @@ async def main():
         script_dir = os.path.dirname(__file__)
         abs_ini_path = os.path.join(script_dir, "iocParser/ioc-patterns.ini")
 
-        postgres_storage = psycopg2.connect(
-            host=os.environ.get('POSTGRES', 'localhost'),
-            database=os.environ.get('POSTGRES_DB', 'articlesdb'),
-            user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
-            password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
+        while not postgres_storage:
+            postgres_storage = postgres_test()
 
         redis_storage = redis.Redis(host=os.environ.get('REDIS', 'localhost'), decode_responses=True)
         ioc_parser = IOCParser(abs_ini_path, redis_storage, postgres_storage)
@@ -37,7 +46,6 @@ async def main():
     except Exception as unexpected_error:
         message = "Crawl failed: "
         print(message, unexpected_error)
-        return 1
     finally:
         print("DISCONNECT STORAGE")
         if redis_storage is not None:
