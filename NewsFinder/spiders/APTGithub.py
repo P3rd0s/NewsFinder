@@ -58,6 +58,8 @@ class APTParser(scrapy.Spider):
             if session.redis.sismember(ARTICLES, report_sha1) or not report_sha1:
                 return
 
+            report_file = requests.get(file_url, stream=True)
+
             session.redis.sadd(ARTICLES, report_sha1)
             session.redis.hmset(ARTICLES + ':' + report_sha1, {
                 'date': report_date,
@@ -69,7 +71,6 @@ class APTParser(scrapy.Spider):
                 'ioc_count': 0
             })
 
-            report_file = requests.get(file_url, stream=True)
             session.redis.hincrby(ARTICLES + ':' + report_sha1, 'ioc_count',
                                   session.ioc_parser.parse_pdf(report_file, report))
 
