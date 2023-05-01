@@ -56,7 +56,6 @@ class ThreatpostSpider(XMLFeedSpider):
                 'Year': date_obj.strftime('%Y'),
                 'Source': item.xpath('.//*[name()=\'dc:creator\']/text()').get() or 'no_info',
                 'Link': item.xpath('.//link/text()').get(),
-                'Filename': '',
                 'SHA-1': hashlib.sha1(str.encode(item.xpath('.//link/text()').get())).hexdigest()
             }
 
@@ -75,7 +74,6 @@ class ThreatpostSpider(XMLFeedSpider):
                 'year': report['Year'],
                 'source': report['Source'],
                 'link': report['Link'],
-                'filename': report['Filename'],
                 'ioc_count': 0
             })
 
