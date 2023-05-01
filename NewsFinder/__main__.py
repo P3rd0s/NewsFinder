@@ -37,6 +37,7 @@ async def main():
     except Exception as unexpected_error:
         message = "Crawl failed: "
         print(message, unexpected_error)
+        return 1
     finally:
         print("DISCONNECT STORAGE")
         if redis_storage is not None:
