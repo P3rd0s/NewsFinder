@@ -4,6 +4,7 @@ import os
 import argparse
 import glob
 import re
+import psycopg2
 
 
 import pandas as pd
@@ -130,6 +131,15 @@ class IOCParser(object):
                     data = page.extract_text()
                     ioc_counter = ioc_counter + self.parse_data(data, report, True)
 
+        except psycopg2.ProgrammingError as exc:
+            self.postgres.rollback()
+        except psycopg2.InterfaceError as exc:
+            self.postgres = psycopg2.connect(
+                host=os.environ.get('POSTGRES', 'localhost'),
+                database=os.environ.get('POSTGRES_DB', 'articlesdb'),
+                user=os.environ.get('POSTGRES_USER', 'iocsfinder'),
+                password=os.environ.get('POSTGRES_PASSWORD', 'strongHeavyPassword4thisdb'))
+            self.postgres_cursor = self.postgres.cursor()
         except Exception:
             raise
 
