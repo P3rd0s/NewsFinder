@@ -33,8 +33,8 @@ class WhiteList(dict):
 class IOCParser(object):
     patterns = {}
     redis = None
-    postgres: psycopg2.connection = None
-    postgres_cursor: psycopg2.cursor = None
+    postgres = None
+    postgres_cursor = None
 
     def __init__(self, patterns_ini, redis, postgres):
         basedir = os.path.dirname(os.path.abspath(__file__))
