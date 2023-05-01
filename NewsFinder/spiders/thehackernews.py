@@ -39,6 +39,8 @@ class ThehackernewsSpider(scrapy.Spider):
 
         locale.setlocale(locale.LC_ALL, 'en_US.utf8')
         date_str = response.xpath('.//*[@class=\'author\']/text()').get()
+        if date_str is None:
+            date_str = 'Jan 1, 1980'
         date_obj = datetime.datetime.strptime(date_str, '%b %d, %Y')
 
         report = {
