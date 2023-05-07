@@ -92,7 +92,7 @@ class IOCParser(object):
                         'type': ioc_type,
                         'id': ioc_id,
                         'ioc': ioc_match,
-                        'ioc_around': ind_match[0],
+                        'iocs_paragraph': ind_match[0],
                         'article_hash': report['SHA-1']
                     })
                     self.redis.sadd(IOC_TYPES + ":" + ioc_type, ioc_id)
@@ -105,8 +105,8 @@ class IOCParser(object):
         if not is_pdf:
             try:
                 table = os.environ.get('POSTGRES_TABLE', 'articles')
-                self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''',
-                                             (base64.b64encode(data.encode()),))
+                self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', NULL, %s)''',
+                                             (data.replace("'", '').replace('0x00', ''),))
                 self.postgres.commit()
             except psycopg2.ProgrammingError as exc:
                 self.postgres.rollback()
@@ -138,13 +138,15 @@ class IOCParser(object):
             with io.BytesIO(pdf_file_response.content) as open_pdf_file:
                 pdf = PdfReader(open_pdf_file)
 
+                all_text = []
                 for page in pdf.pages:
                     data = page.extract_text()
+                    all_text.append(data)
                     ioc_counter = ioc_counter + self.parse_data(data, report, True)
 
             table = os.environ.get('POSTGRES_TABLE', 'articles')
-            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s)''',
-                                         (base64.b64encode(pdf_file_response.content),))
+            self.postgres_cursor.execute(f'''INSERT INTO {table} VALUES ('{str(report['SHA-1'])}', %s, %s)''',
+                                         (base64.b64encode(pdf_file_response.content), '\n'.join(all_text).replace("'", '').replace('0x00', '')))
             self.postgres.commit()
 
         except psycopg2.ProgrammingError as exc:
