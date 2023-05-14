@@ -14,7 +14,6 @@ EPOCHS = 3
 LEARNING_RATE = 1e-05
 MAX_GRAD_NORM = 10
 
-MODEL_PATH = 'modules/BertNer/model'
 MODEL_CONFIG = 'config.json'
 MODEL_BIN = 'pytorch_model.bin'
 MODEL_VOCAB = 'vocab.txt'
@@ -34,9 +33,7 @@ class BertNer:
             self.device_name = 'cpu'
             print('Используется центральный процессор')
 
-        script_dir = os.path.dirname(__file__)
-        self.abs_model_path = os.path.join(script_dir, MODEL_PATH)
-
+        self.abs_model_path = os.path.dirname(__file__)
         if os.path.isdir(self.abs_model_path):
             self.init_model()
         else:
