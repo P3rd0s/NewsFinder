@@ -6,7 +6,7 @@ import scrapy
 from redis.client import Redis
 
 from NewsFinder.constants.constants import ARTICLES
-from NewsFinder.iocParser.iocparser import IOCParser
+from NewsFinder.modules.IocParser.iocparser import IOCParser
 
 
 class ThehackernewsSpider(scrapy.Spider):
@@ -31,7 +31,7 @@ class ThehackernewsSpider(scrapy.Spider):
         for item in attacks:
             yield scrapy.Request(item.xpath(".//@href").get(), callback=self.parse_article)
 
-        if self.MAX_PAGES is not 0:
+        if self.MAX_PAGES != 0:
             next_page = response.css('a.blog-pager-older-link-mobile::attr(href)').get()
             yield scrapy.Request(next_page, callback=self.parse)
 

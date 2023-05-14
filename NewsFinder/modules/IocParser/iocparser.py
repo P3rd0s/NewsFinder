@@ -12,6 +12,7 @@ from redis.client import Redis
 from requests import Response
 
 from NewsFinder.constants.constants import IOC_ID_KEY, IOC_TYPES, IOC_DATES
+from NewsFinder.modules.BertNer.BertNER import BertNer
 
 try:
     import configparser as ConfigParser
@@ -35,6 +36,7 @@ class IOCParser(object):
     redis = None
     postgres = None
     postgres_cursor = None
+    bert_model = None
 
     def __init__(self, patterns_ini, redis, postgres):
         basedir = os.path.dirname(os.path.abspath(__file__))
@@ -43,6 +45,7 @@ class IOCParser(object):
         self.redis: Redis = redis
         self.postgres = postgres
         self.postgres_cursor = postgres.cursor()
+        self.bert_model = BertNer()
 
     def load_patterns(self, fpath):
         config = ConfigParser.ConfigParser()
@@ -83,7 +86,7 @@ class IOCParser(object):
                 if isinstance(ind_match, tuple):
                     ioc_match = ind_match[1]
 
-                if self.is_in_whitelist(ioc_match, ioc_type):
+                if self.is_in_whitelist(ioc_match, ioc_type) or not self.bert_model.is_ioc(ind_match[0]):
                     continue
 
                 try:

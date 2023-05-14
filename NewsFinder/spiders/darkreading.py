@@ -6,7 +6,7 @@ import scrapy
 from redis.client import Redis
 
 from NewsFinder.constants.constants import ARTICLES
-from NewsFinder.iocParser.iocparser import IOCParser
+from NewsFinder.modules.IocParser.iocparser import IOCParser
 
 
 class DarkreadingSpider(scrapy.Spider):

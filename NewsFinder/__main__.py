@@ -4,7 +4,7 @@ import os.path
 import psycopg2
 import redis
 
-from NewsFinder.iocParser.iocparser import IOCParser
+from NewsFinder.modules.IocParser.iocparser import IOCParser
 from NewsFinder.spiders import threatpost, darkreading, thehackernews, APTGithub
 from scrapy.utils.project import get_project_settings
 from scrapy.crawler import CrawlerProcess
@@ -30,7 +30,7 @@ async def main():
         process = CrawlerProcess(settings)
 
         script_dir = os.path.dirname(__file__)
-        abs_ini_path = os.path.join(script_dir, "iocParser/ioc-patterns.ini")
+        abs_ini_path = os.path.join(script_dir, "modules/IocParser/ioc-patterns.ini")
 
         while not postgres_storage:
             await asyncio.sleep(5)

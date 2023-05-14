@@ -8,7 +8,7 @@ from redis.client import Redis
 from scrapy.spiders import XMLFeedSpider
 
 from NewsFinder.constants.constants import ARTICLES
-from NewsFinder.iocParser.iocparser import IOCParser
+from NewsFinder.modules.IocParser.iocparser import IOCParser
 
 
 class ThreatpostSpider(XMLFeedSpider):
