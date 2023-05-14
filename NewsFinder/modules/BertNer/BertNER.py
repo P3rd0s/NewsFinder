@@ -69,10 +69,8 @@ class BertNer:
         self.model = BertForTokenClassification.from_pretrained(MODEL_PATH)
         self.model = self.model.to(self.device_name)
         self.model.eval()
-        print(self.is_ioc())
 
-    def is_ioc(self, sentence=''):
-        sentence = "Microsoft states that CVE-2022-34713 is a “variant of” Dogwalk, but different."
+    def is_ioc(self, sentence):
         inputs = self.tokenizer(sentence, padding='max_length', truncation=True, max_length=MAX_LEN, return_tensors="pt")
 
         # Вычисление на графическом процессоре
