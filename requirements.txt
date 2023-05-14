@@ -7,5 +7,4 @@ PyPDF2==3.0.1
 redis==4.4.2
 requests==2.25.1
 Scrapy==2.7.1
---pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
 transformers==4.29.1

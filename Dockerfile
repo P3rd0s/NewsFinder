@@ -6,6 +6,7 @@ COPY requirements.txt /usr/src/app/NewsFinder
 RUN apt-get update && \
     apt-get -y install libpq-dev gcc && \
     pip install -r /usr/src/app/NewsFinder/requirements.txt && \
+    pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu && \
     apt-get install -y locales && \
     sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales
