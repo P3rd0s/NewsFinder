@@ -14,16 +14,17 @@ EPOCHS = 3
 LEARNING_RATE = 1e-05
 MAX_GRAD_NORM = 10
 
-MODEL_PATH = './modules/BertNer/model'
-MODEL_CONFIG = MODEL_PATH + '/config.json'
-MODEL_BIN = MODEL_PATH + '/pytorch_model.bin'
-MODEL_VOCAB = MODEL_PATH + '/vocab.txt'
+MODEL_PATH = 'modules/BertNer/model'
+MODEL_CONFIG = 'config.json'
+MODEL_BIN = 'pytorch_model.bin'
+MODEL_VOCAB = 'vocab.txt'
 
 
 class BertNer:
     device_name = 'cpu'
     tokenizer = None
     model = None
+    abs_model_path = None
 
     def __init__(self):
         if cuda.is_available():
@@ -33,30 +34,33 @@ class BertNer:
             self.device_name = 'cpu'
             print('Используется центральный процессор')
 
-        if os.path.isdir(MODEL_PATH):
+        script_dir = os.path.dirname(__file__)
+        self.abs_model_path = os.path.join(script_dir, MODEL_PATH)
+
+        if os.path.isdir(self.abs_model_path):
             self.init_model()
         else:
             config_url = os.environ.get('MODEL_CONFIG_URL', 'https://www.dropbox.com/s/y9ajnw755uz3pb2/config.json?dl=1')
             model_url = os.environ.get('MODEL_URL', 'https://www.dropbox.com/s/9jlc9rwzckptva9/pytorch_model.bin?dl=1')
             vocab_url = os.environ.get('MODEL_VOCAB_URL', 'https://www.dropbox.com/s/pzgexbgd5tdzopy/vocab.txt?dl=1')
 
-            os.mkdir(MODEL_PATH)
+            os.mkdir(self.abs_model_path)
             r = requests.get(config_url, stream=True)
-            with open(MODEL_CONFIG, 'wb') as f:
+            with open(os.path.join(self.abs_model_path, MODEL_CONFIG), 'wb') as f:
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
                 f.close()
 
             r = requests.get(model_url, stream=True)
-            with open(MODEL_BIN, 'wb') as f:
+            with open(os.path.join(self.abs_model_path, MODEL_BIN), 'wb') as f:
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
                 f.close()
 
             r = requests.get(vocab_url, stream=True)
-            with open(MODEL_VOCAB, 'wb') as f:
+            with open(os.path.join(self.abs_model_path, MODEL_VOCAB), 'wb') as f:
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         f.write(chunk)
@@ -65,8 +69,8 @@ class BertNer:
             self.init_model()
 
     def init_model(self):
-        self.tokenizer = BertTokenizerFast.from_pretrained(MODEL_PATH)
-        self.model = BertForTokenClassification.from_pretrained(MODEL_PATH)
+        self.tokenizer = BertTokenizerFast.from_pretrained(self.abs_model_path)
+        self.model = BertForTokenClassification.from_pretrained(self.abs_model_path)
         self.model = self.model.to(self.device_name)
         self.model.eval()
 
