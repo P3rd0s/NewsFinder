@@ -14,7 +14,7 @@ EPOCHS = 3
 LEARNING_RATE = 1e-05
 MAX_GRAD_NORM = 10
 
-MODEL_PATH = 'modules/BertNer/model'
+MODEL_PATH = './modules/BertNer/model'
 MODEL_CONFIG = MODEL_PATH + '/config.json'
 MODEL_BIN = MODEL_PATH + '/pytorch_model.bin'
 MODEL_VOCAB = MODEL_PATH + '/vocab.txt'
